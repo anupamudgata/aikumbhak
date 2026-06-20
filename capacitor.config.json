@@ -1,0 +1,10 @@
+{
+  "appId": "com.kumbhak.app",
+  "appName": "Kumbhak",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 800, "backgroundColor": "#0a0e1a", "showSpinner": false },
+    "StatusBar": { "style": "DARK", "backgroundColor": "#0a0e1a" }
+  }
+}

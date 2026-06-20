@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0a0e1a" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Kumbhak" />
+<title>Kumbhak · Breathing Studio</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --bg2: #111729;
+    --card: rgba(255,255,255,0.045); --card-hi: rgba(255,255,255,0.08);
+    --line: rgba(255,255,255,0.10); --text: #eaeefb; --dim: #8a93b5;
+    --inhale: #4f8cff; --holdin: #ff5d6c; --exhale: #ffd166; --holdout: #b388ff; --rest: #43d9a3;
+    --accent: #4f8cff; --gold: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 900px at 50% -15%, var(--bg2), var(--bg));
+    color: var(--text); min-height: 100%; display: flex; justify-content: center;
+    overflow-x: hidden; user-select: none; -webkit-font-smoothing: antialiased;
+  }
+  .app { width: 100%; max-width: 480px; padding: 22px 18px 48px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo { font-size: 22px; }
+  .brand h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+  .brand p { font-size: 11px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .plan-chip { font-size: 11px; font-weight: 800; letter-spacing: .5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
+  .plan-chip.pro { color: #061026; background: linear-gradient(135deg, var(--gold), #ffe29a); border: none; }
+  .head-right { display: flex; align-items: center; gap: 8px; }
+  .lang-toggle { width: auto; padding: 5px 10px; font-size: 12px; font-weight: 800; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 16px 0 18px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 10px; text-align: center; }
+  .stat .num { font-size: 20px; font-weight: 800; }
+  .stat .lbl { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+  /* Upgrade banner */
+  .upsell { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(255,209,102,.14), rgba(255,209,102,.04)); border: 1px solid rgba(255,209,102,.3); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; cursor: pointer; }
+  .upsell .em { font-size: 22px; }
+  .upsell .t { flex: 1; }
+  .upsell .t b { font-size: 14px; }
+  .upsell .t p { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .upsell .go { font-size: 18px; color: var(--gold); }
+  .upsell.hidden { display: none; }
+
+  .section-title { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin: 4px 2px 10px; }
+  .techniques { display: flex; flex-direction: column; gap: 10px; }
+  .tech { display: flex; align-items: center; gap: 14px; cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; transition: border-color .2s, background .2s, transform .08s; position: relative; }
+  .tech:active { transform: scale(.99); }
+  .tech.sel { border-color: var(--accent); background: var(--card-hi); }
+  .tech.locked { opacity: .85; }
+  .tech .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex: none; }
+  .tech .info { flex: 1; min-width: 0; }
+  .tech .info h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .tech .info p { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .tech .pat { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tech .chk { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+  .tech.sel .chk { border-color: var(--accent); background: var(--accent); }
+  .tech.sel .chk::after { content: "✓"; font-size: 12px; color: #061026; font-weight: 800; }
+  .badge-pro { font-size: 9px; font-weight: 800; letter-spacing: .5px; padding: 2px 6px; border-radius: 6px; background: linear-gradient(135deg, var(--gold), #ffe29a); color: #061026; }
+
+  .custom { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 14px; }
+  .custom.show { display: flex; }
+  .field label { font-size: 13px; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .field label b { color: var(--text); font-weight: 700; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; }
+
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--dim); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
+  .switch { position: relative; width: 44px; height: 26px; flex: none; }
+  .switch input { display: none; }
+  .switch span { position: absolute; inset: 0; background: var(--line); border-radius: 999px; transition: .2s; }
+  .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .2s; }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::after { transform: translateX(18px); }
+
+  button { font: inherit; font-weight: 700; font-size: 15px; color: var(--text); cursor: pointer; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); transition: transform .08s, background .2s, opacity .2s; width: 100%; }
+  button:active { transform: scale(.97); }
+  button.primary { background: linear-gradient(135deg, var(--accent), #6aa3ff); border: none; color: #061026; }
+  button.gold { background: linear-gradient(135deg, var(--gold), #ffe29a); border: none; color: #061026; }
+  button:disabled { opacity: .4; cursor: default; }
+  .linkbtn { background: none; border: none; color: var(--dim); font-size: 13px; text-decoration: underline; padding: 8px; }
+
+  /* ===== Session ===== */
+  .session { display: none; flex-direction: column; align-items: center; gap: 16px; padding-top: 8px; }
+  .session.show { display: flex; }
+  .sess-head { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .sess-head .name { font-size: 15px; font-weight: 700; }
+  .iconbtn { width: auto; padding: 8px 12px; font-size: 13px; }
+  .dots { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; max-width: 340px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); transition: all .3s; }
+  .dot.done { background: var(--rest); }
+  .dot.active { background: var(--exhale); transform: scale(1.4); box-shadow: 0 0 10px var(--exhale); }
+  .stage { position: relative; width: 300px; height: 300px; display: grid; place-items: center; }
+  .ring { position: absolute; border-radius: 50%; border: 1px solid var(--line); }
+  .ring.r1 { inset: 0; } .ring.r2 { inset: 28px; } .ring.r3 { inset: 56px; }
+  .orb { width: 130px; height: 130px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff4, transparent 60%), var(--inhale); box-shadow: 0 0 70px -8px var(--inhale); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background .6s, box-shadow .6s; }
+  .phase { font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .timer { font-size: 42px; font-weight: 800; line-height: 1; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .cue { text-align: center; color: var(--dim); font-size: 13px; min-height: 18px; }
+  .progress { width: 100%; max-width: 340px; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .progress > span { display: block; height: 100%; width: 0%; background: var(--exhale); transition: width .25s linear, background .4s; }
+  .controls { display: flex; gap: 12px; width: 100%; max-width: 340px; }
+  .done-card { text-align: center; }
+  .done-card .big { font-size: 46px; }
+  .done-card h2 { font-size: 22px; margin: 8px 0 4px; }
+  .done-card p { color: var(--dim); font-size: 14px; }
+
+  /* ===== Overlays (upgrade + safety) ===== */
+  .overlay { position: fixed; inset: 0; background: rgba(6,9,18,.78); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .overlay.show { display: flex; }
+  .sheet { width: 100%; max-width: 420px; background: var(--bg2); border: 1px solid var(--line); border-radius: 22px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+  .sheet h2 { font-size: 22px; font-weight: 800; }
+  .sheet .sub { color: var(--dim); font-size: 13px; margin-top: 4px; }
+  .price { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 4px; }
+  .price .amt { font-size: 38px; font-weight: 800; }
+  .price .per { color: var(--dim); font-size: 14px; }
+  .price-note { color: var(--rest); font-size: 12px; font-weight: 700; margin-bottom: 16px; }
+  .benefits { list-style: none; display: flex; flex-direction: column; gap: 11px; margin: 8px 0 20px; }
+  .benefits li { display: flex; gap: 10px; font-size: 14px; align-items: flex-start; }
+  .benefits li .t2 { color: var(--gold); font-weight: 800; flex: none; }
+  .benefits li.soon { color: var(--dim); }
+  .disclaimer { font-size: 13px; color: var(--dim); line-height: 1.55; }
+  .disclaimer b { color: var(--text); }
+  .disclaimer ul { margin: 10px 0 0 18px; display: flex; flex-direction: column; gap: 6px; }
+  .streak-strip { display: flex; align-items: center; gap: 5px; margin: -6px 2px 18px; }
+  .streak-strip .ss-label { font-size: 11px; color: var(--dim); margin-right: 6px; }
+  .ss-cell { width: 14px; height: 14px; border-radius: 4px; background: var(--line); }
+  .ss-cell.on { background: var(--rest); }
+  .pbar { height: 4px; border-radius: 999px; background: var(--line); margin-top: 8px; overflow: hidden; max-width: 200px; }
+  .pbar > span { display: block; height: 100%; background: var(--rest); }
+  .ai-card { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(79,140,255,.18), rgba(179,136,255,.06)); border: 1px solid rgba(79,140,255,.38); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; cursor: pointer; }
+  .ai-card .ai-em { font-size: 24px; }
+  .ai-card .t { flex: 1; } .ai-card .t b { font-size: 15px; } .ai-card .t p { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .ai-q { font-size: 13px; color: var(--dim); margin: 16px 2px 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { width: auto; padding: 9px 14px; font-size: 13px; font-weight: 600; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .chip.sel { background: var(--accent); border-color: var(--accent); color: #061026; }
+  .bpm { font-size: 46px; font-weight: 800; margin: 14px 0 6px; }
+  .goals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0 6px; }
+  .goal { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 10px; font-size: 14px; }
+  .goal .g-ic { font-size: 26px; }
+  input[type="time"] { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .hint { font-size: 11px; color: var(--dim); line-height: 1.4; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ========== HOME ========== -->
+  <div id="home">
+    <header>
+      <div class="brand">
+        <span class="logo">🧘</span>
+        <div><h1>Kumbhak</h1><p data-i18n="tagline">Breathing Studio</p></div>
+      </div>
+      <div class="head-right">
+        <button class="lang-toggle" id="langToggle">हिं</button>
+        <span class="plan-chip" id="planChip">FREE</span>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><div class="num" id="stSessions">0</div><div class="lbl" data-i18n="statSessions">Sessions</div></div>
+      <div class="stat"><div class="num" id="stMinutes">0</div><div class="lbl" data-i18n="statMinutes">Minutes</div></div>
+      <div class="stat"><div class="num" id="stStreak">0</div><div class="lbl" data-i18n="statStreak">Day Streak</div></div>
+    </div>
+    <div class="streak-strip" id="streakStrip"></div>
+
+    <div class="upsell" id="upsell" onclick="window.__openUpgrade()">
+      <span class="em">✨</span>
+      <div class="t"><b data-i18n="upsellTitle">Unlock Kumbhak Pro</b><p data-i18n="upsellSub">All techniques + breath-hold trainer · lifetime</p></div>
+      <span class="go">›</span>
+    </div>
+
+    <div class="ai-card" id="aiCard">
+      <span class="ai-em">✨</span>
+      <div class="t"><b data-i18n="aiCardTitle">AI Coach</b><p data-i18n="aiCardSub">A session shaped to how you feel</p></div>
+      <span class="badge-pro" id="aiCardBadge">PRO</span>
+    </div>
+
+    <div class="section-title" data-i18n="choose">Choose a technique</div>
+    <div class="techniques" id="techList"></div>
+
+    <div class="custom" id="custom">
+      <div class="field"><label><span data-i18n="customRounds">Rounds</span> <b id="cRoundsV">10</b></label><input type="range" id="cRounds" min="1" max="30" value="10"></div>
+      <div class="field"><label><span data-i18n="customInhale">Inhale</span> <b id="cInhaleV">4s</b></label><input type="range" id="cInhale" min="2" max="10" value="4"></div>
+      <div class="field"><label><span data-i18n="customHold">Hold</span> <b id="cHoldV">30s</b></label><input type="range" id="cHold" min="5" max="180" step="5" value="30"></div>
+      <div class="field"><label><span data-i18n="customExhale">Exhale</span> <b id="cExhaleV">6s</b></label><input type="range" id="cExhale" min="2" max="12" value="6"></div>
+    </div>
+
+    <div class="section-title" data-i18n="programsTitle" style="margin-top:22px">Guided programs</div>
+    <div class="techniques" id="programList"></div>
+
+    <div class="toggle-row"><span data-i18n="soundCues">Sound cues</span><label class="switch"><input type="checkbox" id="sound" checked><span></span></label></div>
+    <div class="toggle-row"><span data-i18n="voiceGuidance">Voice guidance</span><label class="switch"><input type="checkbox" id="voice"><span></span></label></div>
+    <div class="toggle-row"><span data-i18n="soundscape">Soundscape</span><label class="switch"><input type="checkbox" id="ambient" checked><span></span></label></div>
+    <div class="toggle-row"><span data-i18n="haptics">Haptics (vibration)</span><label class="switch"><input type="checkbox" id="haptics" checked><span></span></label></div>
+    <div class="toggle-row"><span data-i18n="reminderLabel">Daily reminder</span><label class="switch"><input type="checkbox" id="remind"><span></span></label></div>
+    <div id="remindRow" style="display:none; gap:10px; align-items:center; margin-top:10px;">
+      <input type="time" id="remindTime" value="08:00">
+      <span class="hint" data-i18n="reminderHint">Works while the app is open. Install the app for reliable reminders.</span>
+    </div>
+
+    <div class="row"><button class="primary" id="beginBtn" data-i18n="begin">Begin Session</button></div>
+    <div class="row" style="margin-top:8px;justify-content:center"><button class="linkbtn" data-i18n="safetyLink" onclick="window.__showSafety(true)">Safety guidelines</button></div>
+  </div>
+
+  <!-- ========== SESSION ========== -->
+  <div class="session" id="session">
+    <div class="sess-head">
+      <span class="name" id="sessName">Box Breathing</span>
+      <button class="iconbtn" id="exitBtn" data-i18n="exit">✕ Exit</button>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="stage">
+      <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="orb" id="orb"><div class="phase" id="phase">Ready</div><div class="timer" id="timer">0:00</div></div>
+    </div>
+    <div class="cue" id="cue">Get ready…</div>
+    <div class="progress"><span id="bar"></span></div>
+    <div class="controls">
+      <button id="startBtn" class="primary">Pause</button>
+      <button id="restartBtn" data-i18n="restart">Restart</button>
+    </div>
+    <div class="done-card hidden" id="doneCard">
+      <div class="big">🙏</div>
+      <h2 data-i18n="doneTitle">Session complete</h2>
+      <p id="doneStats"></p>
+      <div class="row"><button id="doneMeasure" data-i18n="measBtn">Measure your calm</button></div>
+      <div class="row"><button class="primary" id="doneHome" data-i18n="doneBtn">Done</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== UPGRADE OVERLAY ========== -->
+<div class="overlay" id="upgradeOverlay">
+  <div class="sheet">
+    <h2 data-i18n="upgradeTitle">Kumbhak Pro ✨</h2>
+    <p class="sub" data-i18n="upgradeSub">One payment. Yours forever. No subscription.</p>
+    <div class="price"><span class="amt" id="priceAmt">₹499</span><span class="per" data-i18n="perLifetime">one-time · lifetime</span></div>
+    <div class="price-note" data-i18n="priceNote">🔒 Pay once — unlock on every device with your email.</div>
+    <ul class="benefits">
+      <li><span class="t2">✓</span><span data-i18n="benefit1">Every technique unlocked — pranayama, Coherent & more</span></li>
+      <li><span class="t2">✓</span><span data-i18n="benefit2">Kumbhak breath-hold trainer with custom rounds & hold times</span></li>
+      <li><span class="t2">✓</span><span data-i18n="benefit3">Progress & streak synced across your devices</span></li>
+      <li class="soon"><span class="t2" data-i18n="soon">soon</span><span data-i18n="benefit4">Guided programs (Sleep, Anxiety, Focus) & soundscapes</span></li>
+    </ul>
+    <button class="gold" id="unlockBtn"><span data-i18n="unlock">Unlock Pro</span> — <span id="unlockPrice">₹499</span></button>
+    <div class="row" style="margin-top:8px;justify-content:center;gap:18px">
+      <button class="linkbtn" id="restoreBtn" data-i18n="restore">Restore purchase</button>
+      <button class="linkbtn" id="upgradeClose" data-i18n="later">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SAFETY OVERLAY ========== -->
+<div class="overlay" id="safetyOverlay">
+  <div class="sheet">
+    <h2 data-i18n="safetyTitle">Breathe safely 🌬️</h2>
+    <p class="sub" data-i18n="safetySub">Please read before your first session.</p>
+    <div class="disclaimer" style="margin-top:16px">
+      <span data-i18n="safetyIntro">Kumbhak is a wellness tool, not medical advice. Breath retention and paced breathing can cause lightheadedness.</span>
+      <ul>
+        <li data-i18n="safety1">Practice sitting or lying down — never while driving, in water, or swimming.</li>
+        <li data-i18n="safety2">Stop immediately if you feel dizzy, faint, or short of breath.</li>
+        <li data-i18n="safety3">Consult a doctor first if you are pregnant or have heart conditions, epilepsy, or high blood pressure.</li>
+        <li data-i18n="safety4">Never force a breath-hold. Comfort over duration, always.</li>
+      </ul>
+    </div>
+    <div class="row"><button class="primary" id="safetyAck" data-i18n="understand">I understand</button></div>
+  </div>
+</div>
+
+<!-- ========== HEART-RATE / BIOFEEDBACK OVERLAY ========== -->
+<div class="overlay" id="measureOverlay">
+  <div class="sheet" style="text-align:center">
+    <h2 data-i18n="measureTitle">Measure your calm ❤️</h2>
+    <div class="bpm"><span id="measBpm">--</span> <span style="font-size:16px;color:var(--dim)">bpm</span></div>
+    <p class="sub" id="measStatus" data-i18n="measIntro">Measure your resting heart rate with the camera.</p>
+    <div class="row"><button class="primary" id="measStart" data-i18n="measStartLabel">Start</button></div>
+    <div class="row" style="justify-content:center"><button class="linkbtn" id="measClose" data-i18n="later">Maybe later</button></div>
+  </div>
+</div>
+
+<!-- ========== AI COACH OVERLAY ========== -->
+<div class="overlay" id="aiOverlay">
+  <div class="sheet">
+    <h2 data-i18n="aiCoachTitle">Your AI breathing coach</h2>
+    <p class="sub" data-i18n="aiCoachSub">Tell me how you feel — I'll compose a session for you.</p>
+    <div class="ai-q" data-i18n="moodQ">How are you feeling?</div>
+    <div class="chips" id="moodChips"></div>
+    <div class="ai-q" data-i18n="minQ">How many minutes?</div>
+    <div class="chips" id="minChips"></div>
+    <div class="row"><button class="gold" id="composeBtn" data-i18n="compose">Compose my session</button></div>
+    <div class="row" style="justify-content:center"><button class="linkbtn" id="aiClose" data-i18n="later">Maybe later</button></div>
+  </div>
+</div>
+
+<!-- ========== ONBOARDING OVERLAY ========== -->
+<div class="overlay" id="onboardOverlay">
+  <div class="sheet">
+    <h2 data-i18n="onboardTitle">What brings you here?</h2>
+    <p class="sub" data-i18n="onboardSub">Pick a goal — we'll start you with a short, free session.</p>
+    <div class="goals" id="goals">
+      <button class="goal" data-goal="sleep"><span class="g-ic">😴</span><span data-i18n="goalSleep">Sleep</span></button>
+      <button class="goal" data-goal="stress"><span class="g-ic">🌿</span><span data-i18n="goalStress">Less stress</span></button>
+      <button class="goal" data-goal="focus"><span class="g-ic">🎯</span><span data-i18n="goalFocus">Focus</span></button>
+      <button class="goal" data-goal="energy"><span class="g-ic">⚡</span><span data-i18n="goalEnergy">Energy</span></button>
+    </div>
+    <div class="row" style="justify-content:center"><button class="linkbtn" id="onboardSkip" data-i18n="onboardSkip">Skip for now</button></div>
+  </div>
+</div>
+
+<!-- Content pack (techniques + i18n: English + Hindi) -->
+<script src="content.js"></script>
+<!-- Supabase JS (auth + entitlement). Harmless while SUPABASE_URL is blank. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  /* =====================================================================
+     CONFIG  — edit these freely
+     ===================================================================== */
+  const PRICE = { amount: 499, currency: "INR", display: "₹499" };  // lifetime, one-time
+  const RAZORPAY_KEY_ID = "rzp_test_XXXXXXXXXXXX";  // <-- Phase 2: your real Razorpay key
+  const API_BASE = "";  // same-origin serverless functions once deployed
+  const SUPABASE_URL = "";       // <-- Phase 2: your Supabase project URL
+  const SUPABASE_ANON_KEY = "";  // <-- Phase 2: your Supabase anon key (safe to expose)
+  const REVENUECAT_API_KEY = ""; // <-- Phase 3: RevenueCat public SDK key (native apps only)
+  /* ===================================================================== */
+
+  // Supabase client (auth + entitlement). Stays null locally → dev-preview mode.
+  const sb = (SUPABASE_URL && window.supabase)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  /* ---------- Content + i18n (English + Hindi, from content.js) ---------- */
+  const C = window.KUMBHAK_CONTENT;
+  let lang = localStorage.getItem("kumbhak.lang") || "en";
+  const t = (k) => { const s = C.strings[lang] || C.strings.en; return s[k] != null ? s[k] : (C.strings.en[k] != null ? C.strings.en[k] : k); };
+  const phaseStr = (ph) => (C.strings[lang] || C.strings.en).phases[ph] || C.strings.en.phases[ph];
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
+  }
+  function localizeTechniques() {
+    TECHNIQUES.forEach(tech => { const tr = tech.i18n[lang] || tech.i18n.en; tech.name = tr.name; tech.desc = tr.desc; tech.note = tr.note || ""; });
+  }
+
+  const FREE_IDS = C.freeIds;
+  const TECHNIQUES = C.techniques;
+  TECHNIQUES.forEach(tech => tech.pro = !FREE_IDS.includes(tech.id));
+  localizeTechniques();
+  let selected = TECHNIQUES[0];
+
+  /* ---------- Entitlement (server-verified in prod; dev fallback locally) ---------- */
+  const Entitlement = {
+    state: { pro: false, email: null, signedIn: false },
+    backend: false,
+    async token() {
+      if (!sb) return null;
+      const { data } = await sb.auth.getSession();
+      return data.session?.access_token || null;
+    },
+    async refresh() {
+      const tok = await this.token();
+      this.state.signedIn = !!tok;
+      try {
+        if (!sb) throw 0;  // no Supabase configured → dev fallback
+        const r = await fetch(API_BASE + "/api/me", { headers: tok ? { Authorization: "Bearer " + tok } : {} });
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        this.backend = true;
+        this.state.pro = !!d.pro;
+        this.state.email = d.email || null;
+      } catch (e) {
+        // No backend yet (e.g. opened as a local file) → dev fallback.
+        this.backend = false;
+        this.state.pro = localStorage.getItem("kumbhak.pro") === "1";
+      }
+      renderPlan();
+    },
+    isPro() { return this.state.pro; },
+    async ensureSignedIn() {
+      if (!sb) return false;
+      if (await this.token()) return true;
+      const email = prompt("Enter your email — we'll send a one-tap sign-in link:");
+      if (!email) return false;
+      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+      alert("Check your email for the sign-in link, then tap Unlock again.");
+      return false;
+    },
+    async startCheckout() {
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return this._nativePurchase();
+      const placeholder = RAZORPAY_KEY_ID.includes("XXXX");
+      if (placeholder || !sb) return this._devUnlock(placeholder);   // local/dev preview
+      if (!(await this.ensureSignedIn())) return;
+      const tok = await this.token();
+      try {
+        const order = await fetch(API_BASE + "/api/create-order", {
+          method: "POST", headers: { Authorization: "Bearer " + tok },
+        }).then(r => r.json());
+        if (!(await loadRazorpay())) throw new Error("Razorpay failed to load");
+        const rzp = new Razorpay({
+          key: RAZORPAY_KEY_ID, order_id: order.id, amount: order.amount, currency: order.currency,
+          name: "Kumbhak Pro", description: "Lifetime unlock", theme: { color: "#4f8cff" },
+          prefill: { email: this.state.email || "" },
+          handler: async (resp) => {
+            const ok = await fetch(API_BASE + "/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok },
+              body: JSON.stringify(resp),
+            }).then(r => r.ok);
+            if (ok) { await this.refresh(); closeUpgrade(); alert("🎉 Welcome to Kumbhak Pro!"); }
+            else alert("Payment received but verification failed — contact support.");
+          },
+        });
+        rzp.open();
+      } catch (e) { alert("Could not start checkout: " + e.message); }
+    },
+    async restore() {
+      if (!sb) return alert("Restore works once the app is deployed with Supabase configured.");
+      const email = prompt("Enter the email you paid with — we'll send a sign-in link:");
+      if (!email) return;
+      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+      alert("If that email has Pro, a sign-in link is on its way. Open it to restore.");
+    },
+    _devUnlock(placeholder) {
+      const msg = placeholder
+        ? "DEV MODE (no Razorpay/Supabase configured yet).\n\nSimulate a successful unlock to preview Pro? No real payment is taken."
+        : "Backend not reachable. Simulate unlock for preview?";
+      if (confirm(msg)) { localStorage.setItem("kumbhak.pro", "1"); this.refresh(); closeUpgrade(); }
+    },
+    // Native (iOS/Android) purchase via RevenueCat. Stores require their own IAP —
+    // Razorpay is web-only. RevenueCat's webhook grants Pro server-side; we then refresh.
+    async _nativePurchase() {
+      const P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+      if (!P) return this._devUnlock(true);   // plugin absent (e.g. web preview)
+      try {
+        const offerings = await P.getOfferings();
+        const pkg = offerings && offerings.current && offerings.current.availablePackages && offerings.current.availablePackages[0];
+        if (!pkg) throw new Error("No IAP product configured in RevenueCat");
+        await P.purchasePackage({ aPackage: pkg });
+        await this.refresh(); closeUpgrade(); alert("🎉 Welcome to Kumbhak Pro!");
+      } catch (e) {
+        const m = (e && e.message) || String(e);
+        if (!/cancel/i.test(m)) alert("Purchase failed: " + m);
+      }
+    },
+  };
+
+  function loadRazorpay() {
+    return new Promise(res => {
+      if (window.Razorpay) return res(true);
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = () => res(true); s.onerror = () => res(false);
+      document.body.appendChild(s);
+    });
+  }
+
+  /* ---------- Stats ---------- */
+  const STORE = "kumbhak.stats.v1";
+  const loadStats = () => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } };
+  const saveStats = s => { try { localStorage.setItem(STORE, JSON.stringify(s)); } catch (e) {} };
+  function renderStats() {
+    const s = loadStats();
+    $("stSessions").textContent = s.sessions || 0;
+    $("stMinutes").textContent = Math.round((s.totalSeconds || 0) / 60);
+    $("stStreak").textContent = s.streak || 0;
+    const hist = s.history || {}, today = new Date();
+    let cells = "";
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      cells += `<i class="ss-cell${hist[d.toISOString().slice(0, 10)] ? " on" : ""}"></i>`;
+    }
+    const strip = $("streakStrip"); if (strip) strip.innerHTML = `<span class="ss-label">${t("last7")}</span>` + cells;
+  }
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const daysBetween = (a, b) => a ? Math.round((Date.parse(b) - Date.parse(a)) / 864e5) : null;
+  function bumpStreak(s) {
+    const today = todayStr();
+    if (s.lastDate === today) return;            // already practiced today
+    const gap = daysBetween(s.lastDate, today);
+    if (gap === 1) s.streak = (s.streak || 0) + 1;                                   // consecutive day
+    else if (gap === 2 && (s.freezes || 0) > 0) { s.freezes -= 1; s.streak = (s.streak || 0) + 1; } // freeze covers one missed day
+    else s.streak = 1;                            // first day, or streak broken
+    s.lastDate = today;
+    s.best = Math.max(s.best || 0, s.streak);
+    if (s.streak % 7 === 0) s.freezes = Math.min(2, (s.freezes || 0) + 1); // earn a freeze each week
+  }
+  // Records a practice toward stats + streak. Partial sessions count too —
+  // showing up is what matters (avoids the "what-the-hell effect").
+  function recordSession(seconds) {
+    const s = loadStats();
+    if (s.freezes == null) s.freezes = 1;        // everyone starts with one freeze
+    s.sessions = (s.sessions || 0) + 1;
+    s.totalSeconds = (s.totalSeconds || 0) + Math.round(seconds);
+    s.history = s.history || {};
+    const dkey = todayStr(); s.history[dkey] = (s.history[dkey] || 0) + 1;
+    for (const k in s.history) { if (daysBetween(k, dkey) > 60) delete s.history[k]; } // keep ~2 months
+    const before = s.streak || 0;
+    bumpStreak(s);
+    s._milestone = (s.streak !== before && C.milestones.includes(s.streak)) ? s.streak : 0;
+    saveStats(s); renderStats();
+    return s;
+  }
+
+  /* ---------- Plan / paywall rendering ---------- */
+  function renderPlan() {
+    const pro = Entitlement.isPro();
+    $("planChip").textContent = pro ? t("planPro") : t("planFree");
+    $("planChip").classList.toggle("pro", pro);
+    $("upsell").classList.toggle("hidden", pro);
+    buildTechniques();
+    renderPrograms();
+    const aiBadge = $("aiCardBadge"); if (aiBadge) aiBadge.style.display = pro ? "none" : "";
+  }
+
+  function buildTechniques() {
+    const list = $("techList"); list.innerHTML = "";
+    const pro = Entitlement.isPro();
+    TECHNIQUES.forEach(tech => {
+      const locked = tech.pro && !pro;
+      const el = document.createElement("div");
+      el.className = "tech" + (tech.id === selected.id ? " sel" : "") + (locked ? " locked" : "");
+      const p = tech.pattern;
+      const pat = [p.inhale, p.holdIn, p.exhale, p.holdOut].filter(Boolean).join("-");
+      el.innerHTML = `
+        <div class="ic" style="background:${tech.color}22;color:${tech.color}">${locked ? "🔒" : tech.icon}</div>
+        <div class="info"><h3>${tech.name}${tech.pro ? ' <span class="badge-pro">PRO</span>' : ""}</h3><p>${tech.desc}</p></div>
+        <div class="pat">${pat}</div>
+        <div class="chk"></div>`;
+      el.addEventListener("click", () => {
+        if (locked) { openUpgrade(); return; }
+        selected = tech; activeProgram = null;
+        $("custom").classList.toggle("show", !!tech.custom);
+        buildTechniques();
+      });
+      list.appendChild(el);
+    });
+  }
+
+  // custom sliders -> kumbhak technique
+  const kumbhak = TECHNIQUES.find(t => t.id === "kumbhak");
+  const bindCustom = (id, apply, fmt) => { const el = $(id), out = $(id + "V"); el.addEventListener("input", () => { apply(+el.value); out.textContent = fmt(el.value); }); };
+  bindCustom("cRounds", v => kumbhak.rounds = v, v => v);
+  bindCustom("cInhale", v => kumbhak.pattern.inhale = v, v => v + "s");
+  bindCustom("cHold", v => kumbhak.pattern.holdIn = v, v => v + "s");
+  bindCustom("cExhale", v => kumbhak.pattern.exhale = v, v => v + "s");
+
+  /* ---------- Guided programs (Pro) ---------- */
+  const PROG_KEY = "kumbhak.programs";
+  const loadProg = () => { try { return JSON.parse(localStorage.getItem(PROG_KEY)) || {}; } catch (e) { return {}; } };
+  const saveProg = p => localStorage.setItem(PROG_KEY, JSON.stringify(p));
+  let activeProgram = null;
+  function renderPrograms() {
+    const list = $("programList"); if (!list) return; list.innerHTML = "";
+    const pro = Entitlement.isPro(), prog = loadProg();
+    (C.programs || []).forEach(pg => {
+      const ptr = pg.i18n[lang] || pg.i18n.en;
+      const n = pg.days.length, done = (prog[pg.id] && prog[pg.id].done) || 0;
+      const pct = Math.min(100, Math.round(done / n * 100));
+      const dayText = done >= n ? t("programDone") : t("dayProgress").replace("{d}", done + 1).replace("{n}", n);
+      const locked = !pro;
+      const el = document.createElement("div");
+      el.className = "tech" + (locked ? " locked" : "");
+      el.innerHTML = `
+        <div class="ic" style="background:${pg.color}22;color:${pg.color}">${locked ? "🔒" : pg.icon}</div>
+        <div class="info"><h3>${ptr.name} <span class="badge-pro">PRO</span></h3><p>${ptr.desc}</p>
+          <div class="pbar"><span style="width:${pct}%"></span></div></div>
+        <div class="pat">${dayText}</div>`;
+      el.addEventListener("click", () => { if (locked) { openUpgrade(); return; } startProgramDay(pg); });
+      list.appendChild(el);
+    });
+  }
+  function startProgramDay(pg) {
+    const prog = loadProg();
+    const done = (prog[pg.id] && prog[pg.id].done) || 0;
+    const idx = done < pg.days.length ? done : 0;   // replay from day 1 once completed
+    const day = pg.days[idx];
+    const base = TECHNIQUES.find(x => x.id === day.tech) || TECHNIQUES[0];
+    const ptr = pg.i18n[lang] || pg.i18n.en;
+    selected = Object.assign({}, base, { pro: false, rounds: day.rounds || base.rounds, name: `${ptr.name} · ${t("dayWord")} ${idx + 1}` });
+    activeProgram = { id: pg.id, idx };
+    $("custom").classList.remove("show");
+    startSession();
+  }
+
+  /* ---------- AI coach (Pro) — personalized session via Claude, with local fallback ---------- */
+  let aiMood = null, aiMinutes = 5;
+  function openAi() { aiMood = null; aiMinutes = 5; renderAiChips(); $("aiOverlay").classList.add("show"); }
+  function closeAi() { $("aiOverlay").classList.remove("show"); }
+  function renderAiChips() {
+    const mc = $("moodChips"); mc.innerHTML = "";
+    C.aiMoods.forEach(m => {
+      const b = document.createElement("button"); b.className = "chip"; b.dataset.mood = m.id;
+      b.innerHTML = `${m.icon} ${t("mood_" + m.id)}`;
+      b.addEventListener("click", () => { aiMood = m.id; mc.querySelectorAll(".chip").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); });
+      mc.appendChild(b);
+    });
+    const nc = $("minChips"); nc.innerHTML = "";
+    C.aiMinutes.forEach(min => {
+      const b = document.createElement("button"); b.className = "chip" + (min === aiMinutes ? " sel" : ""); b.dataset.min = min;
+      b.textContent = `${min} ${t("minShort")}`;
+      b.addEventListener("click", () => { aiMinutes = min; nc.querySelectorAll(".chip").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); });
+      nc.appendChild(b);
+    });
+  }
+  function clampSpec(s) {
+    const n = (v, lo, hi, d) => { v = +v; return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    return {
+      title: s.title || t("aiCardTitle"),
+      pattern: { inhale: n(s.inhale, 3, 8, 4), holdIn: n(s.holdIn, 0, 30, 0), exhale: n(s.exhale, 3, 12, 6), holdOut: n(s.holdOut, 0, 15, 0), rest: n(s.rest, 0, 15, 0) },
+      rounds: Math.round(n(s.rounds, 1, 30, 8)),
+      coachIntro: s.coachIntro || "", why: s.why || "",
+    };
+  }
+  function devCompose(mood, minutes) {
+    const p = Object.assign({ inhale: 4, holdIn: 0, exhale: 6, holdOut: 0, rest: 0 }, C.moodTech[mood] || {});
+    const cycle = (p.inhale + p.holdIn + p.exhale + p.holdOut) || 8;
+    const rounds = Math.max(4, Math.min(30, Math.round((minutes * 60) / cycle)));
+    return clampSpec({ title: `${t("aiCardTitle")} · ${minutes} ${t("minShort")}`, inhale: p.inhale, holdIn: p.holdIn, exhale: p.exhale, holdOut: p.holdOut, rest: p.rest || 0, rounds, coachIntro: t("coach_" + mood), why: t("coach_" + mood) });
+  }
+  async function getAISession(mood, minutes) {
+    if (sb && Entitlement.backend && Entitlement.isPro()) {   // real Claude generation when deployed + Pro
+      const tok = await Entitlement.token();
+      const r = await fetch(API_BASE + "/api/ai-session", {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok },
+        body: JSON.stringify({ mood, minutes, lang }),
+      });
+      if (!r.ok) throw new Error("ai backend " + r.status);
+      return clampSpec(await r.json());
+    }
+    return devCompose(mood, minutes);   // local rule-based fallback (no backend/key)
+  }
+  function runAISession(spec) {
+    selected = { id: "ai", icon: "✨", color: "#4f8cff", pro: false, custom: false, pattern: spec.pattern, rounds: spec.rounds, name: spec.title, note: spec.why, coachIntro: spec.coachIntro };
+    activeProgram = null;
+    $("custom").classList.remove("show");
+    startSession();
+  }
+  $("composeBtn").addEventListener("click", async () => {
+    const mood = aiMood || "okay";
+    const btn = $("composeBtn"); btn.disabled = true; btn.textContent = t("composing");
+    let spec;
+    try { spec = await getAISession(mood, aiMinutes); } catch (e) { spec = devCompose(mood, aiMinutes); }
+    btn.disabled = false; btn.textContent = t("compose");
+    closeAi(); runAISession(spec);
+  });
+  $("aiClose").addEventListener("click", closeAi);
+  $("aiCard").addEventListener("click", () => { if (Entitlement.isPro()) openAi(); else openUpgrade(); });
+
+  /* ---------- Biofeedback: camera heart-rate (PPG), Pro ---------- */
+  const Bio = {
+    stream: null, raf: null, samples: [], t0: 0, running: false,
+    async start() {
+      const status = $("measStatus"), bpmEl = $("measBpm"), btn = $("measStart");
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      } catch (e) { status.textContent = t("measDenied"); return; }
+      const track = this.stream.getVideoTracks()[0];
+      try { await track.applyConstraints({ advanced: [{ torch: true }] }); } catch (e) {}  // light helps the signal
+      const video = document.createElement("video"); video.playsInline = true; video.muted = true;
+      video.srcObject = this.stream; await video.play();
+      const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64;
+      const ctx = cv.getContext("2d", { willReadFrequently: true });
+      this.samples = []; this.t0 = performance.now(); this.running = true;
+      btn.disabled = true; bpmEl.textContent = "--";
+      const DURATION = 20000, WARMUP = 3000;
+      const loop = () => {
+        if (!this.running) return;
+        ctx.drawImage(video, 0, 0, 64, 64);
+        const d = ctx.getImageData(24, 24, 16, 16).data;
+        let r = 0; for (let i = 0; i < d.length; i += 4) r += d[i]; r /= (d.length / 4);
+        const now = performance.now(); this.samples.push({ t: now, r });
+        const elapsed = now - this.t0;
+        status.textContent = elapsed < WARMUP ? t("measHold")
+          : t("measuring").replace("{s}", Math.max(0, Math.ceil((DURATION - elapsed) / 1000)));
+        if (elapsed >= DURATION) { this.finish(); return; }
+        this.raf = requestAnimationFrame(loop);
+      };
+      this.raf = requestAnimationFrame(loop);
+    },
+    estimate() {
+      const s = this.samples.filter(x => x.t - this.t0 >= 3000);  // drop warmup
+      if (s.length < 30) return 0;
+      const rs = s.map(x => x.r), W = 8, det = [];
+      for (let i = 0; i < rs.length; i++) {           // detrend: subtract local moving average
+        let a = 0, c = 0;
+        for (let j = Math.max(0, i - W); j <= Math.min(rs.length - 1, i + W); j++) { a += rs[j]; c++; }
+        det.push(rs[i] - a / c);
+      }
+      let beats = 0;                                  // count upward zero-crossings = pulses
+      for (let i = 1; i < det.length; i++) if (det[i - 1] < 0 && det[i] >= 0) beats++;
+      const dur = (s[s.length - 1].t - s[0].t) / 1000;
+      if (dur <= 0) return 0;
+      const bpm = Math.round(beats / dur * 60);
+      return (bpm >= 40 && bpm <= 180) ? bpm : 0;
+    },
+    finish() {
+      this.running = false; cancelAnimationFrame(this.raf);
+      const bpm = this.estimate(); this.stop();
+      const bpmEl = $("measBpm"), status = $("measStatus"), btn = $("measStart");
+      btn.disabled = false;
+      if (!bpm) { status.textContent = t("measFail"); return; }
+      bpmEl.textContent = bpm;
+      const last = +localStorage.getItem("kumbhak.bpm") || 0;
+      let msg = t("measDone").replace("{b}", bpm);
+      if (last && last - bpm >= 2) msg = t("measCalmer").replace("{d}", last - bpm);
+      localStorage.setItem("kumbhak.bpm", bpm);
+      status.textContent = msg;
+    },
+    stop() {
+      if (this.stream) { this.stream.getTracks().forEach(tr => tr.stop()); this.stream = null; }
+      if (this.raf) cancelAnimationFrame(this.raf);
+      this.running = false;
+    },
+  };
+  function openMeasure() { $("measBpm").textContent = "--"; $("measStatus").textContent = t("measIntro"); $("measureOverlay").classList.add("show"); }
+  function closeMeasure() { Bio.stop(); $("measureOverlay").classList.remove("show"); }
+  $("measStart").addEventListener("click", () => Bio.start());
+  $("measClose").addEventListener("click", closeMeasure);
+  $("doneMeasure").addEventListener("click", () => { if (Entitlement.isPro()) openMeasure(); else openUpgrade(); });
+
+  /* ---------- Native store init (RevenueCat) — no-op on web ---------- */
+  async function initNativeStore() {
+    if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
+    const P = window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    if (!P || !REVENUECAT_API_KEY) return;
+    try {
+      await P.configure({ apiKey: REVENUECAT_API_KEY });
+      if (sb) { const { data } = await sb.auth.getUser(); if (data && data.user) await P.logIn({ appUserID: data.user.id }); }
+    } catch (e) {}
+  }
+
+  /* ---------- Upgrade overlay ---------- */
+  function openUpgrade() { $("upgradeOverlay").classList.add("show"); }
+  function closeUpgrade() { $("upgradeOverlay").classList.remove("show"); }
+  window.__openUpgrade = openUpgrade;
+  $("priceAmt").textContent = PRICE.display;
+  $("unlockPrice").textContent = PRICE.display;
+  $("unlockBtn").addEventListener("click", () => Entitlement.startCheckout());
+  $("restoreBtn").addEventListener("click", () => Entitlement.restore());
+  $("upgradeClose").addEventListener("click", closeUpgrade);
+
+  /* ---------- Safety overlay ---------- */
+  const SAFETY_KEY = "kumbhak.safetyAck";
+  function showSafety(force) { if (force || localStorage.getItem(SAFETY_KEY) !== "1") $("safetyOverlay").classList.add("show"); }
+  window.__showSafety = showSafety;
+  $("safetyAck").addEventListener("click", () => {
+    localStorage.setItem(SAFETY_KEY, "1");
+    $("safetyOverlay").classList.remove("show");
+    if (pendingStart) { pendingStart = false; startSession(); }
+  });
+
+  /* ---------- Audio + voice ---------- */
+  let actx;
+  function beep(freq = 660, dur = 0.15) {
+    if (!$("sound").checked) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.frequency.value = freq; o.type = "sine"; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.0001, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.3, actx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.start(); o.stop(actx.currentTime + dur);
+    } catch (e) {}
+  }
+  function findVoice(want) {
+    if (!("speechSynthesis" in window)) return null;
+    const vs = speechSynthesis.getVoices();
+    for (const w of want) { const v = vs.find(v => (v.lang || "").toLowerCase().startsWith(w)); if (v) return v; }
+    return null;
+  }
+  function pickVoice() {
+    return findVoice(lang === "hi" ? ["hi-in", "hi"] : lang === "or" ? ["or-in", "or"] : ["en-in", "en-gb", "en-us", "en"]);
+  }
+  // Odia → Devanagari via the shared Brahmic codepoint shift (0x200). Lets a Hindi
+  // voice SPEAK Odia cues when the device has no native Odia voice — same phonology,
+  // so the words are Odia, just pronounced by a Hindi voice.
+  function odiaToDeva(s) {
+    let out = "";
+    for (const ch of s) { const c = ch.codePointAt(0); out += (c >= 0x0B00 && c <= 0x0B7F) ? String.fromCodePoint(c - 0x200) : ch; }
+    return out;
+  }
+  function say(text) {
+    if (!$("voice").checked || !("speechSynthesis" in window)) return;
+    try {
+      speechSynthesis.cancel();
+      let speakText = text;
+      let vlang = lang === "hi" ? "hi-IN" : lang === "or" ? "or-IN" : "en-US";
+      let voice = pickVoice();
+      if (lang === "or" && !voice) {            // no native Odia voice → speak Odia through a Hindi voice
+        speakText = odiaToDeva(text); vlang = "hi-IN"; voice = findVoice(["hi-in", "hi", "en-in", "en"]);
+      }
+      const u = new SpeechSynthesisUtterance(speakText);
+      u.lang = vlang; if (voice) u.voice = voice;
+      u.rate = 0.92; u.volume = 0.9; speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  /* ---------- Ambience: breath-synced soundscape (Web Audio, no files) ---------- */
+  const Ambience = {
+    master: null, nodes: [], running: false,
+    start() {
+      if (!$("ambient").checked) return;
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      this.stop();
+      const ctx = actx;
+      this.master = ctx.createGain(); this.master.gain.value = 0.0001; this.master.connect(ctx.destination);
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 650; lp.Q.value = 0.6; lp.connect(this.master);
+      const base = 130.8; // soft C3 drone
+      [[base, 0.5, "sine"], [base * 1.5, 0.28, "sine"], [base * 2, 0.2, "triangle"]].forEach(([f, g, type], i) => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.value = f * (1 + i * 0.002);
+        const gain = ctx.createGain(); gain.gain.value = g; o.connect(gain); gain.connect(lp); o.start();
+        this.nodes.push(o, gain);
+      });
+      this.master.gain.setTargetAtTime(0.10, ctx.currentTime, 1.2);
+      this.running = true;
+    },
+    setPhase(ph, frac) {
+      if (!this.running || !this.master) return;
+      let target = 0.10;
+      if (ph === "inhale") target = 0.06 + 0.10 * frac;        // swell up with the inhale
+      else if (ph === "exhale") target = 0.16 - 0.10 * frac;   // recede with the exhale
+      else if (ph === "holdIn") target = 0.16;
+      else if (ph === "holdOut" || ph === "rest") target = 0.05;
+      this.master.gain.setTargetAtTime(target, actx.currentTime, 0.3);
+    },
+    stop() {
+      this.running = false;
+      this.nodes.forEach(n => { try { n.stop && n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} });
+      this.nodes = [];
+      if (this.master) { try { this.master.disconnect(); } catch (e) {} this.master = null; }
+    },
+  };
+  function haptic(ph) {
+    if (!$("haptics").checked || !navigator.vibrate) return;
+    const pat = ph === "inhale" ? [0, 70] : ph === "holdIn" ? [0, 25, 40, 25]
+      : ph === "exhale" ? [0, 120] : ph === "holdOut" ? [0, 25, 40, 25] : null;
+    if (pat) try { navigator.vibrate(pat); } catch (e) {}
+  }
+
+  /* ---------- Session engine ---------- */
+  const PHASE_META = {
+    inhale:  { color:"var(--inhale)",  freq:523, scaleFrom:0.72, scaleTo:1.42 },
+    holdIn:  { color:"var(--holdin)",  freq:784, hold:1.42 },
+    exhale:  { color:"var(--exhale)",  freq:440, scaleFrom:1.42, scaleTo:0.72 },
+    holdOut: { color:"var(--holdout)", freq:660, hold:0.72 },
+    rest:    { color:"var(--rest)",    freq:330, hold:0.85 },
+  };
+  const orb = $("orb"), phaseEl = $("phase"), timerEl = $("timer"), cueEl = $("cue"), barEl = $("bar"), dotsEl = $("dots"), startBtn = $("startBtn");
+  let running = false, paused = false, raf = null;
+  let seq = [], segIdx = 0, segStart = 0, doneRounds = 0, totalSeconds = 0, rounds = 0;
+
+  function buildSequence(t) {
+    const p = t.pattern; rounds = t.rounds; seq = []; totalSeconds = 0;
+    const order = ["inhale", "holdIn", "exhale", "holdOut"];
+    for (let r = 1; r <= rounds; r++) {
+      order.forEach(ph => { if (p[ph] > 0) seq.push({ ph, dur: p[ph], round: r }); });
+      if (p.rest > 0 && r < rounds) seq.push({ ph: "rest", dur: p.rest, round: r, endRound: true });
+      else seq[seq.length - 1].endRound = true;
+    }
+    seq.forEach(s => totalSeconds += s.dur);
+  }
+  const fmtTime = s => { s = Math.ceil(s); const m = Math.floor(s / 60); return m > 0 ? `${m}:${String(s % 60).padStart(2, "0")}` : `${s}`; };
+  function buildDots(active = 0, done = 0) {
+    dotsEl.innerHTML = "";
+    for (let i = 1; i <= rounds; i++) { const d = document.createElement("div"); d.className = "dot" + (i <= done ? " done" : i === active ? " active" : ""); dotsEl.appendChild(d); }
+  }
+  function setVisual(meta) {
+    orb.style.background = `radial-gradient(circle at 35% 30%, #fff4, transparent 60%), ${meta.color}`;
+    orb.style.boxShadow = `0 0 70px -8px ${meta.color}`;
+    barEl.style.background = meta.color;
+  }
+  function enterSegment() {
+    const seg = seq[segIdx], meta = PHASE_META[seg.ph];
+    setVisual(meta); phaseEl.textContent = phaseStr(seg.ph).label; buildDots(seg.round, doneRounds);
+    const rnd = t("roundOf").replace("{r}", seg.round).replace("{n}", rounds);
+    cueEl.textContent = `${rnd} · ${selected.note || selected.name}`;
+    beep(meta.freq); say(phaseStr(seg.ph).voice); haptic(seg.ph); Ambience.setPhase(seg.ph, 0);
+  }
+  function tick(ts) {
+    if (!running || paused) return;
+    if (!segStart) segStart = ts;
+    const seg = seq[segIdx], meta = PHASE_META[seg.ph];
+    const elapsed = (ts - segStart) / 1000, remaining = Math.max(0, seg.dur - elapsed), frac = Math.min(1, elapsed / seg.dur);
+    timerEl.textContent = fmtTime(remaining); barEl.style.width = (frac * 100) + "%";
+    if (meta.scaleFrom != null) orb.style.transform = `scale(${meta.scaleFrom + (meta.scaleTo - meta.scaleFrom) * frac})`;
+    else orb.style.transform = `scale(${meta.hold})`;
+    Ambience.setPhase(seg.ph, frac);
+    if (elapsed >= seg.dur) {
+      if (seg.endRound) doneRounds = seg.round;
+      segIdx++; segStart = 0;
+      if (segIdx >= seq.length) { finish(); return; }
+      enterSegment();
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  let pendingStart = false;
+  function startSession() {
+    if (selected.pro && !Entitlement.isPro()) { openUpgrade(); return; }
+    if (localStorage.getItem(SAFETY_KEY) !== "1") { pendingStart = true; showSafety(true); return; }
+    buildSequence(selected);
+    $("sessName").textContent = selected.name;
+    $("home").classList.add("hidden"); $("session").classList.add("show"); $("doneCard").classList.add("hidden");
+    running = true; paused = false; segIdx = 0; segStart = 0; doneRounds = 0;
+    startBtn.textContent = t("pause"); buildDots(); requestWake(); Ambience.start();
+    let c = 3;
+    setVisual(PHASE_META.rest); orb.style.transform = "scale(1)";
+    phaseEl.textContent = t("ready"); cueEl.textContent = t("getReady"); timerEl.textContent = c;
+    beep(392); say(selected.coachIntro || (selected.name + ". " + t("getReady")));
+    const iv = setInterval(() => {
+      c--;
+      if (c <= 0) { clearInterval(iv); enterSegment(); raf = requestAnimationFrame(tick); }
+      else { timerEl.textContent = c; beep(392); }
+    }, 1000);
+  }
+  function togglePause() {
+    if (!running) return;
+    paused = !paused; startBtn.textContent = paused ? t("resume") : t("pause");
+    if (!paused) { segStart = 0; raf = requestAnimationFrame(tick); Ambience.start(); }
+    else Ambience.stop();
+  }
+  function finish() {
+    running = false; cancelAnimationFrame(raf); Ambience.stop();
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    const st = recordSession(totalSeconds);
+    if (activeProgram) {
+      const prog = loadProg(), cur = prog[activeProgram.id] || { done: 0 };
+      const pg = C.programs.find(p => p.id === activeProgram.id);
+      if (pg && activeProgram.idx === cur.done) cur.done = Math.min(pg.days.length, cur.done + 1);
+      prog[activeProgram.id] = cur; saveProg(prog); activeProgram = null; renderPrograms();
+    }
+    setVisual(PHASE_META.rest); orb.style.transform = "scale(1.1)";
+    phaseEl.textContent = t("doneShort"); timerEl.textContent = "✓"; barEl.style.width = "100%"; buildDots(0, rounds);
+    const mins = Math.round(totalSeconds / 60), secs = Math.round(totalSeconds % 60);
+    let line = `${selected.name} · ${rounds} ${t("roundsWord")} · ${mins > 0 ? mins + "m " : ""}${secs}s`;
+    if (st && st._milestone) line += `\n${t("streakBadge").replace("{n}", st._milestone)}`;
+    $("doneStats").style.whiteSpace = "pre-line";
+    $("doneStats").textContent = line;
+    $("doneCard").classList.remove("hidden");
+    beep(523); setTimeout(() => beep(659), 160); setTimeout(() => beep(784), 320);
+    say(t("doneTitle"));
+  }
+  function practicedSeconds() {
+    let s = 0;
+    for (let i = 0; i < segIdx && i < seq.length; i++) s += seq[i].dur;
+    if (!paused && segStart) s += Math.max(0, (performance.now() - segStart) / 1000);
+    return s;
+  }
+  function goHome() {
+    if (running) { const p = practicedSeconds(); if (p >= 20) recordSession(p); } // forgiving: partial counts toward streak
+    activeProgram = null;
+    running = false; paused = false; cancelAnimationFrame(raf); Ambience.stop();
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    $("session").classList.remove("show"); $("home").classList.remove("hidden");
+  }
+  $("beginBtn").addEventListener("click", startSession);
+  $("startBtn").addEventListener("click", togglePause);
+  $("restartBtn").addEventListener("click", startSession);
+  $("exitBtn").addEventListener("click", goHome);
+  $("doneHome").addEventListener("click", goHome);
+  document.addEventListener("keydown", e => {
+    if (!$("session").classList.contains("show")) return;
+    if (e.code === "Space") { e.preventDefault(); togglePause(); }
+    if (e.key === "Escape") goHome();
+  });
+  let wakeLock = null;
+  async function requestWake() { try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {} }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && running) requestWake(); });
+
+  /* ---------- Language toggle ---------- */
+  const LANGS = ["en", "hi", "or"];
+  const LANG_LABEL = { en: "EN", hi: "हिं", or: "ଓଡ଼ିଆ" };
+  const nextLang = (l) => LANGS[(LANGS.indexOf(l) + 1) % LANGS.length];
+  function setLangButton() { $("langToggle").textContent = LANG_LABEL[nextLang(lang)] || "EN"; }  // shows the language you'll switch to
+  $("langToggle").addEventListener("click", () => {
+    lang = nextLang(lang);
+    localStorage.setItem("kumbhak.lang", lang);
+    setLangButton(); applyI18n(); localizeTechniques(); renderPlan(); renderStats();
+  });
+
+  /* ---------- Onboarding (first run: goal → first free session before paywall) ---------- */
+  const ONBOARD_KEY = "kumbhak.onboarded";
+  const closeOnboarding = () => { $("onboardOverlay").classList.remove("show"); localStorage.setItem(ONBOARD_KEY, "1"); };
+  document.querySelectorAll("#goals .goal").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selected = TECHNIQUES.find(x => x.id === (C.goalMap[btn.dataset.goal] || "box")) || TECHNIQUES[0];
+      activeProgram = null;
+      $("custom").classList.toggle("show", !!selected.custom);
+      buildTechniques(); closeOnboarding(); startSession();
+    });
+  });
+  $("onboardSkip").addEventListener("click", closeOnboarding);
+
+  /* ---------- Daily reminder (local notification while the app is open) ---------- */
+  const REMIND_KEY = "kumbhak.remind";
+  let remindTimer = null;
+  const loadRemind = () => { try { return JSON.parse(localStorage.getItem(REMIND_KEY)) || {}; } catch (e) { return {}; } };
+  const saveRemind = r => localStorage.setItem(REMIND_KEY, JSON.stringify(r));
+  function syncRemindUI() {
+    const r = loadRemind();
+    $("remind").checked = !!r.on;
+    $("remindTime").value = r.time || "08:00";
+    $("remindRow").style.display = r.on ? "flex" : "none";
+  }
+  function scheduleReminder() {
+    if (remindTimer) { clearTimeout(remindTimer); remindTimer = null; }
+    const r = loadRemind();
+    if (!r.on || !("Notification" in window) || Notification.permission !== "granted") return;
+    const [h, m] = (r.time || "08:00").split(":").map(Number);
+    const now = new Date(), next = new Date();
+    next.setHours(h, m, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    remindTimer = setTimeout(() => {
+      try { new Notification(t("reminderTitle"), { body: t("reminderBody"), icon: "icon-192.png" }); } catch (e) {}
+      scheduleReminder();   // re-arm for tomorrow
+    }, next - now);
+  }
+  $("remind").addEventListener("change", async () => {
+    const r = loadRemind();
+    if ($("remind").checked) {
+      if ("Notification" in window && Notification.permission !== "granted") {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") { $("remind").checked = false; alert(t("reminderHint")); return; }
+      }
+      r.on = true;
+    } else r.on = false;
+    r.time = $("remindTime").value || "08:00";
+    saveRemind(r); syncRemindUI(); scheduleReminder();
+  });
+  $("remindTime").addEventListener("change", () => { const r = loadRemind(); r.time = $("remindTime").value; saveRemind(r); scheduleReminder(); });
+
+  /* ---------- Init ---------- */
+  setLangButton();
+  applyI18n();
+  renderStats();
+  syncRemindUI();
+  scheduleReminder();
+  Entitlement.refresh();   // sets plan + builds techniques (localized)
+  if (localStorage.getItem(ONBOARD_KEY) !== "1") $("onboardOverlay").classList.add("show");
+  else showSafety(false);  // returning users: disclaimer only if not yet acknowledged
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+  initNativeStore();       // RevenueCat on native; no-op on web
+})();
+</script>
+</body>
+</html>
