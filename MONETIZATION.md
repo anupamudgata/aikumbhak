@@ -3,6 +3,35 @@
 Model: **free app + a one-time ₹499 payment that unlocks Pro forever.** No subscription.
 This reuses your BhartPostAI stack (Razorpay + Supabase + Vercel) almost entirely.
 
+## 🎁 CURRENT STATE — Free Launch (paywall OFF)
+
+Right now **everything is free for everyone** — the paywall is intentionally turned off
+for launch (drive adoption + reviews first, monetize later). This costs nothing to run:
+the AI Coach uses the **local rule-based generator** (`devCompose`), and there is **no
+`ANTHROPIC_API_KEY` set on Vercel**, so no AI/API spend is possible.
+
+**The switch:** `index.html` →
+```js
+const FREE_LAUNCH = true;   // unlocks ALL Pro features for everyone, no payment
+```
+Every Pro gate, lock badge, and the upsell card route through this one flag. Unlocked
+while `true`: AI Coach, all techniques, guided programs, and calm-measurement (camera HR).
+
+### When you're ready to charge ₹499 — do this, in order:
+
+1. **Re-add the AI key so the paywall *adds* value (avoids a takeaway).** Don't sell users
+   the exact local coach they already had free — gate the **real Claude AI** coach behind
+   Pro instead. Re-add `ANTHROPIC_API_KEY` in Vercel (Production + Development). The client
+   already calls `/api/ai-session` (Claude Haiku 4.5) only for Pro users, falling back to
+   the local coach for free users — so free users keep the local coach, payers get AI.
+   > Cost reminder: ~$0.002–0.004 per AI session, capped at 40/user/day in `api/ai-session.js`.
+2. **Flip the flag:** set `FREE_LAUNCH = false` in `index.html`.
+3. **Finish the Phase 2 go-live checklist below** (Razorpay keys + `PRO_PRICE_PAISE=49900`).
+4. **Commit, push to `aikumbhak`, redeploy** (`vercel --prod`).
+
+Result: free tier = local coach + core breathing; ₹499 Pro = real AI coach + all
+techniques + programs + sync. An upgrade, not a takeaway.
+
 ## How it works
 
 ```
@@ -72,5 +101,6 @@ trainer, cross-device sync, and (later) guided programs + soundscapes.
 
 ## Pricing knobs
 
-- `index.html` → `PRICE` (display) and `FREE_IDS` (which techniques are free).
+- `index.html` → `FREE_LAUNCH` (master switch — `true` = everything free, `false` = paywall on).
+- `index.html` → `PRICE` (display) and `FREE_IDS` (which techniques are free *when the paywall is on*).
 - `.env` → `PRO_PRICE_PAISE` (the amount actually charged; 49900 = ₹499).
