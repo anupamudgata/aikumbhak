@@ -339,6 +339,7 @@
   const SUPABASE_URL = "https://zavfmrpxrutmoxhsrhls.supabase.co";       // <-- Phase 2: your Supabase project URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphdmZtcnB4cnV0bW94aHNyaGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3Nzg5OTAsImV4cCI6MjA4ODM1NDk5MH0.0V41upBCwAyuyLBFi1L2YJqFQJ9uakzNvfl4-6rxUV4";  // <-- Phase 2: your Supabase anon key (safe to expose)
   const REVENUECAT_API_KEY = ""; // <-- Phase 3: RevenueCat public SDK key (native apps only)
+  const FREE_LAUNCH = true;      // 🎁 Launch promo: unlock ALL features for everyone, no payment. Flip to false to switch on the ₹499 paywall.
   /* ===================================================================== */
 
   // Supabase client (auth + entitlement). Stays null locally → dev-preview mode.
@@ -361,7 +362,7 @@
 
   const FREE_IDS = C.freeIds;
   const TECHNIQUES = C.techniques;
-  TECHNIQUES.forEach(tech => tech.pro = !FREE_IDS.includes(tech.id));
+  TECHNIQUES.forEach(tech => tech.pro = FREE_LAUNCH ? false : !FREE_IDS.includes(tech.id));
   localizeTechniques();
   let selected = TECHNIQUES[0];
 
@@ -523,10 +524,10 @@
     const pro = Entitlement.isPro();
     $("planChip").textContent = pro ? t("planPro") : t("planFree");
     $("planChip").classList.toggle("pro", pro);
-    $("upsell").classList.toggle("hidden", pro);
+    $("upsell").classList.toggle("hidden", FREE_LAUNCH || pro);
     buildTechniques();
     renderPrograms();
-    const aiBadge = $("aiCardBadge"); if (aiBadge) aiBadge.style.display = pro ? "none" : "";
+    const aiBadge = $("aiCardBadge"); if (aiBadge) aiBadge.style.display = (FREE_LAUNCH || pro) ? "none" : "";
   }
 
   function buildTechniques() {
@@ -574,12 +575,12 @@
       const n = pg.days.length, done = (prog[pg.id] && prog[pg.id].done) || 0;
       const pct = Math.min(100, Math.round(done / n * 100));
       const dayText = done >= n ? t("programDone") : t("dayProgress").replace("{d}", done + 1).replace("{n}", n);
-      const locked = !pro;
+      const locked = FREE_LAUNCH ? false : !pro;
       const el = document.createElement("div");
       el.className = "tech" + (locked ? " locked" : "");
       el.innerHTML = `
         <div class="ic" style="background:${pg.color}22;color:${pg.color}">${locked ? "🔒" : pg.icon}</div>
-        <div class="info"><h3>${ptr.name} <span class="badge-pro">PRO</span></h3><p>${ptr.desc}</p>
+        <div class="info"><h3>${ptr.name}${FREE_LAUNCH ? "" : ' <span class="badge-pro">PRO</span>'}</h3><p>${ptr.desc}</p>
           <div class="pbar"><span style="width:${pct}%"></span></div></div>
         <div class="pat">${dayText}</div>`;
       el.addEventListener("click", () => { if (locked) { openUpgrade(); return; } startProgramDay(pg); });
@@ -661,7 +662,7 @@
     closeAi(); runAISession(spec);
   });
   $("aiClose").addEventListener("click", closeAi);
-  $("aiCard").addEventListener("click", () => { if (Entitlement.isPro()) openAi(); else openUpgrade(); });
+  $("aiCard").addEventListener("click", () => { if (FREE_LAUNCH || Entitlement.isPro()) openAi(); else openUpgrade(); });
 
   /* ---------- Biofeedback: camera heart-rate (PPG), Pro ---------- */
   const Bio = {
@@ -733,7 +734,7 @@
   function closeMeasure() { Bio.stop(); $("measureOverlay").classList.remove("show"); }
   $("measStart").addEventListener("click", () => Bio.start());
   $("measClose").addEventListener("click", closeMeasure);
-  $("doneMeasure").addEventListener("click", () => { if (Entitlement.isPro()) openMeasure(); else openUpgrade(); });
+  $("doneMeasure").addEventListener("click", () => { if (FREE_LAUNCH || Entitlement.isPro()) openMeasure(); else openUpgrade(); });
 
   /* ---------- Native store init (RevenueCat) — no-op on web ---------- */
   async function initNativeStore() {
@@ -914,7 +915,7 @@
   }
   let pendingStart = false;
   function startSession() {
-    if (selected.pro && !Entitlement.isPro()) { openUpgrade(); return; }
+    if (!FREE_LAUNCH && selected.pro && !Entitlement.isPro()) { openUpgrade(); return; }
     if (localStorage.getItem(SAFETY_KEY) !== "1") { pendingStart = true; showSafety(true); return; }
     buildSequence(selected);
     $("sessName").textContent = selected.name;
