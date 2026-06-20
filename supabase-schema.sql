@@ -32,7 +32,11 @@ create policy "read own entitlement"
 -- to grant Pro only after Razorpay signature verification.
 
 -- Auto-create a free entitlement row when a user signs up.
-create or replace function public.handle_new_user()
+-- NOTE: function + trigger are namespaced (kumbhak_*) so this is SAFE to run on a
+-- DB shared with another app — it will NOT clobber an existing handle_new_user /
+-- on_auth_user_created from another project. Postgres allows multiple triggers on
+-- auth.users, so kumbhak's runs alongside any others.
+create or replace function public.kumbhak_handle_new_user()
 returns trigger language plpgsql security definer as $$
 begin
   insert into public.entitlements (user_id, email, plan)
@@ -41,10 +45,10 @@ begin
   return new;
 end; $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
+drop trigger if exists on_auth_user_created_kumbhak on auth.users;
+create trigger on_auth_user_created_kumbhak
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute function public.kumbhak_handle_new_user();
 
 -- Daily AI-coach usage counter (fair-use cap for /api/ai-session). Written by
 -- the service role only; users may read their own row.
