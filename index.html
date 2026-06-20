@@ -67,6 +67,28 @@
   .tech.sel .chk { border-color: var(--accent); background: var(--accent); }
   .tech.sel .chk::after { content: "✓"; font-size: 12px; color: #061026; font-weight: 800; }
   .badge-pro { font-size: 9px; font-weight: 800; letter-spacing: .5px; padding: 2px 6px; border-radius: 6px; background: linear-gradient(135deg, var(--gold), #ffe29a); color: #061026; }
+  /* classical-technique meta: level badge, heating/cooling dot, caution mark */
+  .meta { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
+  .lvl { font-size: 9px; font-weight: 700; letter-spacing: .3px; padding: 2px 6px; border-radius: 6px; background: var(--card-hi); color: var(--dim); text-transform: uppercase; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.heating { background: #ff7a45; } .dot.cooling { background: #54c8ff; } .dot.balancing { background: #46d39a; }
+  .elname { font-size: 10px; color: var(--dim); }
+  .warn { font-size: 12px; }
+  /* "Breathe for your health" — horizontal goal chips + recommendation rows */
+  .health-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .health-row::-webkit-scrollbar { display: none; }
+  .hchip { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; padding: 12px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; text-align: center; transition: border-color .2s, background .2s; }
+  .hchip:hover { border-color: var(--accent); background: var(--card-hi); }
+  .hchip .hic { font-size: 22px; }
+  .hchip .hname { font-size: 11px; color: var(--text); line-height: 1.2; }
+  .rec { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; margin-top: 10px; transition: border-color .2s; }
+  .rec:hover { border-color: var(--accent); }
+  .rec .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; flex: none; }
+  .rec .info { flex: 1; min-width: 0; }
+  .rec .info h3 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .rec .info p { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .rec .pat { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .disclaimer { font-size: 11px; color: var(--dim); margin-top: 14px; line-height: 1.45; }
 
   .custom { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 14px; }
   .custom.show { display: flex; }
@@ -188,6 +210,9 @@
       <div class="t"><b data-i18n="aiCardTitle">AI Coach</b><p data-i18n="aiCardSub">A session shaped to how you feel</p></div>
       <span class="badge-pro" id="aiCardBadge">PRO</span>
     </div>
+
+    <div class="section-title" data-i18n="healthTitle" style="margin-top:18px">Breathe for your health</div>
+    <div class="health-row" id="healthList"></div>
 
     <div class="section-title" data-i18n="choose">Choose a technique</div>
     <div class="techniques" id="techList"></div>
@@ -322,6 +347,27 @@
   </div>
 </div>
 
+<!-- ========== BREATHE-FOR-HEALTH OVERLAY ========== -->
+<div class="overlay" id="healthOverlay">
+  <div class="sheet">
+    <h2 id="healthRecTitle">Best breaths</h2>
+    <p class="sub" data-i18n="healthSub">Pick a goal — see the breaths traditionally used for it.</p>
+    <div id="healthRecs"></div>
+    <p class="disclaimer" data-i18n="healthNote">Traditional practices for wellbeing, not medical treatment. For any health condition, see a doctor.</p>
+    <div class="row" style="justify-content:center"><button class="linkbtn" id="healthClose" data-i18n="cautionBack">Go back</button></div>
+  </div>
+</div>
+
+<!-- ========== ADVANCED-TECHNIQUE CAUTION OVERLAY ========== -->
+<div class="overlay" id="cautionOverlay">
+  <div class="sheet">
+    <h2 data-i18n="cautionTitle">Practice with care ⚠️</h2>
+    <p class="sub" id="cautionBody" style="margin-top:10px"></p>
+    <div class="row"><button class="primary" id="cautionProceed" data-i18n="cautionProceed">I understand — begin</button></div>
+    <div class="row" style="justify-content:center"><button class="linkbtn" id="cautionBack" data-i18n="cautionBack">Go back</button></div>
+  </div>
+</div>
+
 <!-- Content pack (techniques + i18n: English + Hindi) -->
 <script src="content.js"></script>
 <!-- Supabase JS (auth + entitlement). Harmless while SUPABASE_URL is blank. -->
@@ -352,6 +398,9 @@
   let lang = localStorage.getItem("kumbhak.lang") || "en";
   const t = (k) => { const s = C.strings[lang] || C.strings.en; return s[k] != null ? s[k] : (C.strings.en[k] != null ? C.strings.en[k] : k); };
   const phaseStr = (ph) => (C.strings[lang] || C.strings.en).phases[ph] || C.strings.en.phases[ph];
+  const capk = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  // Level badge + heating/cooling dot markup, shared by technique cards & health recs.
+  const metaHtml = (tech) => `<div class="meta">${tech.level ? `<span class="lvl">${t("level" + capk(tech.level))}</span>` : ""}${tech.element ? `<span class="dot ${tech.element}"></span><span class="elname">${t("el" + capk(tech.element))}</span>` : ""}</div>`;
   function applyI18n() {
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
@@ -527,8 +576,44 @@
     $("upsell").classList.toggle("hidden", FREE_LAUNCH || pro);
     buildTechniques();
     renderPrograms();
+    renderHealth();
     const aiBadge = $("aiCardBadge"); if (aiBadge) aiBadge.style.display = (FREE_LAUNCH || pro) ? "none" : "";
   }
+
+  /* ---------- Breathe for your health (condition → recommended classical breaths) ---------- */
+  function renderHealth() {
+    const list = $("healthList"); if (!list) return; list.innerHTML = "";
+    (C.healthGoals || []).forEach(g => {
+      const el = document.createElement("div");
+      el.className = "hchip";
+      el.innerHTML = `<span class="hic">${g.icon}</span><span class="hname">${t("hg_" + g.id)}</span>`;
+      el.addEventListener("click", () => openHealth(g));
+      list.appendChild(el);
+    });
+  }
+  function openHealth(g) {
+    $("healthRecTitle").textContent = t("healthRecTitle").replace("{g}", t("hg_" + g.id));
+    const box = $("healthRecs"); box.innerHTML = "";
+    g.techs.forEach(id => {
+      const tech = TECHNIQUES.find(x => x.id === id); if (!tech) return;
+      const p = tech.pattern, pat = [p.inhale, p.holdIn, p.exhale, p.holdOut].filter(Boolean).join("-");
+      const el = document.createElement("div");
+      el.className = "rec";
+      el.innerHTML = `<div class="ic" style="background:${tech.color}22;color:${tech.color}">${tech.icon}</div>
+        <div class="info"><h3>${tech.name}${tech.caution ? ' <span class="warn">⚠️</span>' : ""}</h3><p>${tech.desc}</p>${metaHtml(tech)}</div>
+        <div class="pat">${pat}</div>`;
+      el.addEventListener("click", () => {
+        selected = tech; activeProgram = null;
+        $("custom").classList.toggle("show", !!tech.custom);
+        buildTechniques();
+        $("healthOverlay").classList.remove("show");
+        startSession();
+      });
+      box.appendChild(el);
+    });
+    $("healthOverlay").classList.add("show");
+  }
+  $("healthClose").addEventListener("click", () => $("healthOverlay").classList.remove("show"));
 
   function buildTechniques() {
     const list = $("techList"); list.innerHTML = "";
@@ -541,7 +626,7 @@
       const pat = [p.inhale, p.holdIn, p.exhale, p.holdOut].filter(Boolean).join("-");
       el.innerHTML = `
         <div class="ic" style="background:${tech.color}22;color:${tech.color}">${locked ? "🔒" : tech.icon}</div>
-        <div class="info"><h3>${tech.name}${tech.pro ? ' <span class="badge-pro">PRO</span>' : ""}</h3><p>${tech.desc}</p></div>
+        <div class="info"><h3>${tech.name}${tech.caution ? ' <span class="warn">⚠️</span>' : ""}${tech.pro ? ' <span class="badge-pro">PRO</span>' : ""}</h3><p>${tech.desc}</p>${metaHtml(tech)}</div>
         <div class="pat">${pat}</div>
         <div class="chk"></div>`;
       el.addEventListener("click", () => {
@@ -767,6 +852,11 @@
     if (pendingStart) { pendingStart = false; startSession(); }
   });
 
+  /* ---------- Advanced/heating technique caution gate ---------- */
+  function showCaution(tech) { $("cautionBody").textContent = tech.note || ""; $("cautionOverlay").classList.add("show"); }
+  $("cautionProceed").addEventListener("click", () => { cautionAckId = selected.id; $("cautionOverlay").classList.remove("show"); startSession(); });
+  $("cautionBack").addEventListener("click", () => $("cautionOverlay").classList.remove("show"));
+
   /* ---------- Audio + voice ---------- */
   let actx;
   function beep(freq = 660, dur = 0.15) {
@@ -913,9 +1003,10 @@
     }
     raf = requestAnimationFrame(tick);
   }
-  let pendingStart = false;
+  let pendingStart = false, cautionAckId = null;
   function startSession() {
     if (!FREE_LAUNCH && selected.pro && !Entitlement.isPro()) { openUpgrade(); return; }
+    if (selected.caution && cautionAckId !== selected.id) { showCaution(selected); return; }
     if (localStorage.getItem(SAFETY_KEY) !== "1") { pendingStart = true; showSafety(true); return; }
     buildSequence(selected);
     $("sessName").textContent = selected.name;
