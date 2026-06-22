@@ -81,6 +81,9 @@
   .hchip:hover { border-color: var(--accent); background: var(--card-hi); }
   .hchip .hic { font-size: 22px; }
   .hchip .hname { font-size: 11px; color: var(--text); line-height: 1.2; }
+  .duration-row { display: flex; gap: 8px; }
+  .dchip { flex: 1; padding: 11px 6px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--dim); font-size: 13px; font-weight: 700; cursor: pointer; transition: border-color .2s, background .2s, color .2s; }
+  .dchip.sel { border-color: var(--accent); background: var(--card-hi); color: var(--text); }
   .rec { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; margin-top: 10px; transition: border-color .2s; }
   .rec:hover { border-color: var(--accent); }
   .rec .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; flex: none; }
@@ -217,8 +220,15 @@
     <div class="section-title" data-i18n="choose">Choose a technique</div>
     <div class="techniques" id="techList"></div>
 
+    <div class="section-title" data-i18n="lengthTitle" style="margin-top:18px">Session length</div>
+    <div class="duration-row" id="durationRow">
+      <button class="dchip" data-min="3">3 min</button>
+      <button class="dchip sel" data-min="5">5 min</button>
+      <button class="dchip" data-min="10">10 min</button>
+      <button class="dchip" data-min="15">15 min</button>
+    </div>
+
     <div class="custom" id="custom">
-      <div class="field"><label><span data-i18n="customRounds">Rounds</span> <b id="cRoundsV">10</b></label><input type="range" id="cRounds" min="1" max="30" value="10"></div>
       <div class="field"><label><span data-i18n="customInhale">Inhale</span> <b id="cInhaleV">4s</b></label><input type="range" id="cInhale" min="2" max="10" value="4"></div>
       <div class="field"><label><span data-i18n="customHold">Hold</span> <b id="cHoldV">30s</b></label><input type="range" id="cHold" min="5" max="180" step="5" value="30"></div>
       <div class="field"><label><span data-i18n="customExhale">Exhale</span> <b id="cExhaleV">6s</b></label><input type="range" id="cExhale" min="2" max="12" value="6"></div>
@@ -642,10 +652,18 @@
   // custom sliders -> kumbhak technique
   const kumbhak = TECHNIQUES.find(t => t.id === "kumbhak");
   const bindCustom = (id, apply, fmt) => { const el = $(id), out = $(id + "V"); el.addEventListener("input", () => { apply(+el.value); out.textContent = fmt(el.value); }); };
-  bindCustom("cRounds", v => kumbhak.rounds = v, v => v);
   bindCustom("cInhale", v => kumbhak.pattern.inhale = v, v => v + "s");
   bindCustom("cHold", v => kumbhak.pattern.holdIn = v, v => v + "s");
   bindCustom("cExhale", v => kumbhak.pattern.exhale = v, v => v + "s");
+
+  // session length chips
+  $("durationRow").querySelectorAll(".dchip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      $("durationRow").querySelectorAll(".dchip").forEach(c => c.classList.remove("sel"));
+      chip.classList.add("sel");
+      sessionMinutes = +chip.dataset.min;
+    });
+  });
 
   /* ---------- Guided programs (Pro) ---------- */
   const PROG_KEY = "kumbhak.programs";
@@ -957,10 +975,13 @@
   };
   const orb = $("orb"), phaseEl = $("phase"), timerEl = $("timer"), cueEl = $("cue"), barEl = $("bar"), dotsEl = $("dots"), startBtn = $("startBtn");
   let running = false, paused = false, raf = null;
-  let seq = [], segIdx = 0, segStart = 0, doneRounds = 0, totalSeconds = 0, rounds = 0;
+  let seq = [], segIdx = 0, segStart = 0, doneRounds = 0, totalSeconds = 0, rounds = 0, sessionMinutes = 5;
 
   function buildSequence(t) {
-    const p = t.pattern; rounds = t.rounds; seq = []; totalSeconds = 0;
+    const p = t.pattern;
+    const cycle = (p.inhale + p.holdIn + p.exhale + p.holdOut + (p.rest || 0)) || 8;
+    rounds = activeProgram ? t.rounds : Math.max(1, Math.round((sessionMinutes * 60) / cycle));
+    seq = []; totalSeconds = 0;
     const order = ["inhale", "holdIn", "exhale", "holdOut"];
     for (let r = 1; r <= rounds; r++) {
       order.forEach(ph => { if (p[ph] > 0) seq.push({ ph, dur: p[ph], round: r }); });
@@ -970,9 +991,15 @@
     seq.forEach(s => totalSeconds += s.dur);
   }
   const fmtTime = s => { s = Math.ceil(s); const m = Math.floor(s / 60); return m > 0 ? `${m}:${String(s % 60).padStart(2, "0")}` : `${s}`; };
+  const DOT_CAP = 40;
   function buildDots(active = 0, done = 0) {
     dotsEl.innerHTML = "";
-    for (let i = 1; i <= rounds; i++) { const d = document.createElement("div"); d.className = "dot" + (i <= done ? " done" : i === active ? " active" : ""); dotsEl.appendChild(d); }
+    // Long time-based sessions can have hundreds of rounds; cap the dots so the
+    // row stays ~2 lines and each dot represents a chunk of the session. The exact
+    // round is always shown in the cue line ("Round X of N") below the orb.
+    const n = Math.min(rounds, DOT_CAP), scale = n / rounds;
+    const doneDots = Math.floor(done * scale), activeDot = active > 0 ? Math.min(n, doneDots + 1) : 0;
+    for (let i = 1; i <= n; i++) { const d = document.createElement("div"); d.className = "dot" + (i <= doneDots ? " done" : i === activeDot ? " active" : ""); dotsEl.appendChild(d); }
   }
   function setVisual(meta) {
     orb.style.background = `radial-gradient(circle at 35% 30%, #fff4, transparent 60%), ${meta.color}`;
@@ -1042,7 +1069,7 @@
     setVisual(PHASE_META.rest); orb.style.transform = "scale(1.1)";
     phaseEl.textContent = t("doneShort"); timerEl.textContent = "✓"; barEl.style.width = "100%"; buildDots(0, rounds);
     const mins = Math.round(totalSeconds / 60), secs = Math.round(totalSeconds % 60);
-    let line = `${selected.name} · ${rounds} ${t("roundsWord")} · ${mins > 0 ? mins + "m " : ""}${secs}s`;
+    let line = `${selected.name} · ${mins > 0 ? mins + "m " : ""}${secs}s`;
     if (st && st._milestone) line += `\n${t("streakBadge").replace("{n}", st._milestone)}`;
     $("doneStats").style.whiteSpace = "pre-line";
     $("doneStats").textContent = line;
