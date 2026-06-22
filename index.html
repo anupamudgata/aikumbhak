@@ -120,6 +120,7 @@
   .session.show { display: flex; }
   .sess-head { width: 100%; display: flex; align-items: center; justify-content: space-between; }
   .sess-head .name { font-size: 15px; font-weight: 700; }
+  .sess-meta { text-align: center; color: var(--dim); font-size: 12px; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .iconbtn { width: auto; padding: 8px 12px; font-size: 13px; }
   .dots { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; max-width: 340px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); transition: all .3s; }
@@ -258,6 +259,7 @@
       <button class="iconbtn" id="exitBtn" data-i18n="exit">✕ Exit</button>
     </div>
     <div class="dots" id="dots"></div>
+    <div class="sess-meta" id="sessMeta"></div>
     <div class="stage">
       <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
       <div class="orb" id="orb"><div class="phase" id="phase">Ready</div><div class="timer" id="timer">0:00</div></div>
@@ -1037,6 +1039,7 @@
     if (localStorage.getItem(SAFETY_KEY) !== "1") { pendingStart = true; showSafety(true); return; }
     buildSequence(selected);
     $("sessName").textContent = selected.name;
+    $("sessMeta").textContent = `${rounds} ${t("roundsWord")} · ~${Math.max(1, Math.round(totalSeconds / 60))} ${t("minShort")}`;
     $("home").classList.add("hidden"); $("session").classList.add("show"); $("doneCard").classList.add("hidden");
     running = true; paused = false; segIdx = 0; segStart = 0; doneRounds = 0;
     startBtn.textContent = t("pause"); buildDots(); requestWake(); Ambience.start();
